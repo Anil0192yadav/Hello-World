@@ -1,12 +1,18 @@
-FROM alpine/git
-WORKDIR /app
-RUN git clone https://github.com/Anil0192yadav/Hello-World.git 
 
-FROM maven:3.5-jdk-8-alpine
-WORKDIR /app
-RUN mvn clean install  
+FROM maven:3.8.4-jdk-11 AS build
 
-FROM openjdk:8-jre-alpine
-WORKDIR /app
-COPY --from=1 /app/target/maven-project.jar /app 
-CMD ["java -jar maven-project.jar"]
+WORKDIR /home/ec2-user/
+
+COPY . .
+
+RUN mvn clean install
+
+FROM tomcat:9.0-jdk11-openjdk-slim
+
+WORKDIR /usr/local/tomcat/webapps
+
+COPY --from=build /home/ec2-user/webapp/target/webapp.war .
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]
